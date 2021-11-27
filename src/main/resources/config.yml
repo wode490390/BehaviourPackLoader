@@ -1,0 +1,2 @@
+# Default value: 8192 (8KB)
+pack-chunk-size: 8192

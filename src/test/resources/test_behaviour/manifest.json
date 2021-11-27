@@ -1,0 +1,25 @@
+{
+    "format_version": 1,
+    "header": {
+        "name": "BPL test behaviour",
+        "description": "BPL test behaviour",
+        "uuid": "1de97e9f-5472-4518-acf5-5778e46d2f76",
+        "version": [
+            0,
+            0,
+            1
+        ]
+    },
+    "modules": [
+        {
+            "description": "BPL test behaviour",
+            "type": "data",
+            "uuid": "fc8ca2be-9964-4876-acc4-850c52855010",
+            "version": [
+                0,
+                0,
+                1
+            ]
+        }
+    ]
+}

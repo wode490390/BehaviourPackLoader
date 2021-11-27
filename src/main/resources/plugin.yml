@@ -1,0 +1,8 @@
+main: cn.wodor.nukkit.bploader.BehaviourPackLoaderPlugin
+name: "BehaviourPackLoader"
+description: "Behaviour pack loader plugin for Nukkit"
+author: "Wodor"
+website: "https://wodor.cn/"
+version: "${pom.version}"
+api: ["1.0.0"]
+load: POSTWORLD

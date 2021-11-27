@@ -1,0 +1,25 @@
+{
+    "format_version": 1,
+    "header": {
+        "name": "BPL test resource",
+        "description": "BPL test resource",
+        "uuid": "5809de1d-09ea-4974-b895-c88c91f5101d",
+        "version": [
+            0,
+            0,
+            1
+        ]
+    },
+    "modules": [
+        {
+            "description": "BPL test resource",
+            "type": "resources",
+            "uuid": "b4e895e7-697c-4074-9bbe-503868c02883",
+            "version": [
+                0,
+                0,
+                1
+            ]
+        }
+    ]
+}

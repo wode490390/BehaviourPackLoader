@@ -1,0 +1,21 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: cimg/openjdk:8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "pom.xml" }}
+      - run:
+          command: |
+            mvn -B clean package source:jar javadoc:jar
+            mkdir artifact
+            cp target/*.jar artifact
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
+      - store_artifacts:
+          path: artifact
