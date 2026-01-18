@@ -21,10 +21,7 @@ import cn.wodor.nukkit.bploader.BehaviourPackLoaderPlugin;
 import cn.wodor.nukkit.bploader.BehaviourPackManager;
 import cn.wodor.nukkit.bploader.protocol.AbstractResourcePacksInfoPacket;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class PackListener implements Listener {
 
@@ -36,6 +33,7 @@ public class PackListener implements Listener {
     private final ResourcePackManager resourcePackManager;
 
     private final int packChunkSize;
+    private final boolean forceResourcesAllowOwnPacks;
 
     public PackListener(BehaviourPackLoaderPlugin plugin) {
         Objects.requireNonNull(plugin, "plugin");
@@ -45,6 +43,7 @@ public class PackListener implements Listener {
         this.behaviourPackManager = plugin.getBehaviourPackManager();
         this.resourcePackManager = this.server.getResourcePackManager();
         this.packChunkSize = plugin.getPackChunkSize();
+        this.forceResourcesAllowOwnPacks = server.getPropertyBoolean("force-resources-allow-client-packs", false);
     }
 
     @EventHandler
@@ -52,6 +51,10 @@ public class PackListener implements Listener {
         DataPacket packet = event.getPacket();
         Player player = event.getPlayer();
         if (packet instanceof ResourcePackClientResponsePacket) {
+            if (player.spawned) {
+                player.getServer().getLogger().debug(player.getName() + ": ResourcePackClientResponsePacket after player spawned");
+                return;
+            }
             ResourcePackClientResponsePacket pk = (ResourcePackClientResponsePacket) packet;
             int status = pk.responseStatus;
 
@@ -65,6 +68,7 @@ public class PackListener implements Listener {
                     if (pack == null) {
                         pack = this.behaviourPackManager.getPackById(id);
                         if (pack == null) {
+                            player.close("", "disconnectionScreen.resourcePack");
                             return;
                         }
                         behaviour = true;
@@ -91,9 +95,16 @@ public class PackListener implements Listener {
                 event.setCancelled();
             } else if (status == ResourcePackClientResponsePacket.STATUS_HAVE_ALL_PACKS) {
                 ResourcePackStackPacket response = new ResourcePackStackPacket();
-                response.mustAccept = this.server.getForceResources();
-                response.resourcePackStack = this.resourcePackManager.getResourceStack();
-                response.behaviourPackStack = this.behaviourPackManager.getResourceStack();
+                response.mustAccept = this.server.getForceResources() && !this.forceResourcesAllowOwnPacks; // Option not to disable client's own packs
+                if (this.protocol >= 898) { // 1.21.130+
+                    List<ResourcePack> packs = new ArrayList<>();
+                    Collections.addAll(packs, this.resourcePackManager.getResourceStack());
+                    Collections.addAll(packs, this.behaviourPackManager.getResourceStack());
+                    response.resourcePackStack = packs.toArray(new ResourcePack[0]);
+                } else {
+                    response.resourcePackStack = this.resourcePackManager.getResourceStack();
+                    response.behaviourPackStack = this.behaviourPackManager.getResourceStack();
+                }
                 player.dataPacket(response);
 
                 event.setCancelled();
@@ -106,6 +117,7 @@ public class PackListener implements Listener {
             if (pack == null) {
                 pack = this.behaviourPackManager.getPackById(id);
                 if (pack == null) {
+                    player.close("", "disconnectionScreen.resourcePack");
                     return;
                 }
             }
@@ -129,7 +141,15 @@ public class PackListener implements Listener {
         DataPacket packet = event.getPacket();
         if (packet instanceof ResourcePacksInfoPacket) {
             ResourcePacksInfoPacket pk = (ResourcePacksInfoPacket) packet;
-            pk.behaviourPackEntries = this.behaviourPackManager.getResourceStack();
+
+            if (this.protocol >= 729) { // 1.21.30+
+                List<ResourcePack> packs = new ArrayList<>();
+                Collections.addAll(packs, this.resourcePackManager.getResourceStack());
+                Collections.addAll(packs, this.behaviourPackManager.getResourceStack());
+                pk.resourcePackEntries = packs.toArray(new ResourcePack[0]);
+            } else {
+                pk.behaviourPackEntries = this.behaviourPackManager.getResourceStack();
+            }
 
             // Fix packet encoding
             AbstractResourcePacksInfoPacket fixPacket = this.plugin.createResourcePacksInfoPacket();
